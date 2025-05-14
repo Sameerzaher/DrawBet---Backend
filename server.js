@@ -1,10 +1,13 @@
 const express = require("express");
 const cors = require("cors");
-const { getSheetData } = require("./sheetsService");
+const fs = require("fs");
+const path = require("path");
+const { getSheetData } = require("./getSheetData");
 
 const app = express();
 app.use(cors());
 
+// קבצי גיליונות עם עונות
 const spreadsheets = [
   { year: 2017, id: "196rGmls6sXYgO4OGejrbGMfGCkbSbXa6_qiY_i79ctY", league: "Spain" },
   { year: 2018, id: "1h3KmAWIZ-40vzc-Aj9rjR7uaqpAAIRarXVmsiV7Vfkk", league: "Spain" },
@@ -18,21 +21,22 @@ const spreadsheets = [
 
 const gapVersions = ["Gap8", "Gap10"];
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function cleanTeamName(team, league) {
   if (!team || !league) return team;
   return team.startsWith(league + " ") ? team.replace(`${league} `, "") : team;
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
+// ✅ API ראשי – טוען נתוני רצפים מגיליונות Google Sheets
 app.get("/api/activity", async (req, res) => {
   const allData = [];
   let globalHeader = null;
-  let count = 0;
   const successSheets = [];
   const failedSheets = [];
+  let count = 0;
 
   for (const { year, id, league } of spreadsheets) {
     for (const gap of gapVersions) {
@@ -42,7 +46,7 @@ app.get("/api/activity", async (req, res) => {
 
       try {
         console.log(`📤 (${count}) Fetching: ${sheetName}`);
-        await sleep(1000);
+        await sleep(3000); // חשוב: להפחית סיכוי ל־quota
 
         const data = await getSheetData(id, range);
         if (data.length > 1) {
@@ -67,7 +71,6 @@ app.get("/api/activity", async (req, res) => {
           allData.push(...cleaned);
           successSheets.push(sheetName);
           console.log(`✅ Loaded: ${sheetName} (${cleaned.length} rows)`);
-
         } else {
           failedSheets.push(sheetName);
           console.warn(`⚠️ No data in: ${sheetName}`);
@@ -90,6 +93,21 @@ app.get("/api/activity", async (req, res) => {
   console.log(`📦 Total rows: ${allData.length}`);
 
   res.json(finalData);
+});
+
+// ✅ קריאה לנתוני קבוצות שעלו/ירדו – מקובץ cache מקומי
+app.get("/api/promorelegated", (req, res) => {
+  const filePath = path.join(__dirname, "cache/promorelegated.json");
+
+  if (fs.existsSync(filePath)) {
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const json = JSON.parse(raw);
+    console.log("📂 Loaded from cache/promorelegated.json");
+    res.json(json);
+  } else {
+    console.warn("⚠️ promorelegated.json not found");
+    res.status(500).send("❌ No cached data found. Run cachePromorelegated.js");
+  }
 });
 
 const PORT = 4000;

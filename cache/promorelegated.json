@@ -1,0 +1,198 @@
+{
+  "promoted": [
+    {
+      "year": 2017,
+      "team": "Girona"
+    },
+    {
+      "year": 2017,
+      "team": "Getafe"
+    },
+    {
+      "year": 2017,
+      "team": "Levante"
+    },
+    {
+      "year": 2018,
+      "team": "Valladolid"
+    },
+    {
+      "year": 2018,
+      "team": "Huesca"
+    },
+    {
+      "year": 2018,
+      "team": "Rayo Vallecano"
+    },
+    {
+      "year": 2019,
+      "team": "Granada CF"
+    },
+    {
+      "year": 2019,
+      "team": "Osasuna"
+    },
+    {
+      "year": 2019,
+      "team": "Mallorca"
+    },
+    {
+      "year": 2020,
+      "team": "Cadiz"
+    },
+    {
+      "year": 2020,
+      "team": "Elche"
+    },
+    {
+      "year": 2020,
+      "team": "Huesca"
+    },
+    {
+      "year": 2021,
+      "team": "Rayo Vallecano"
+    },
+    {
+      "year": 2021,
+      "team": "Espanyol"
+    },
+    {
+      "year": 2021,
+      "team": "Mallorca"
+    },
+    {
+      "year": 2022,
+      "team": "Girona"
+    },
+    {
+      "year": 2022,
+      "team": "Almeria"
+    },
+    {
+      "year": 2022,
+      "team": "Valladolid"
+    },
+    {
+      "year": 2023,
+      "team": "Alaves"
+    },
+    {
+      "year": 2023,
+      "team": "Las Palmas"
+    },
+    {
+      "year": 2023,
+      "team": "Granada CF"
+    },
+    {
+      "year": 2024,
+      "team": "Espanyol"
+    },
+    {
+      "year": 2024,
+      "team": "Leganes"
+    },
+    {
+      "year": 2024,
+      "team": "Valladolid"
+    }
+  ],
+  "relegated": [
+    {
+      "year": 2017,
+      "team": "Las Palmas"
+    },
+    {
+      "year": 2017,
+      "team": "Deportivo La Coruna"
+    },
+    {
+      "year": 2017,
+      "team": "Malaga"
+    },
+    {
+      "year": 2018,
+      "team": "Girona"
+    },
+    {
+      "year": 2018,
+      "team": "Huesca"
+    },
+    {
+      "year": 2018,
+      "team": "Rayo Vallecano"
+    },
+    {
+      "year": 2019,
+      "team": "Leganes"
+    },
+    {
+      "year": 2019,
+      "team": "Mallorca"
+    },
+    {
+      "year": 2019,
+      "team": "Espanyol"
+    },
+    {
+      "year": 2020,
+      "team": "Huesca"
+    },
+    {
+      "year": 2020,
+      "team": "Valladolid"
+    },
+    {
+      "year": 2020,
+      "team": "Eibar"
+    },
+    {
+      "year": 2021,
+      "team": "Granada CF"
+    },
+    {
+      "year": 2021,
+      "team": "Levante"
+    },
+    {
+      "year": 2021,
+      "team": "Alaves"
+    },
+    {
+      "year": 2022,
+      "team": "Valladolid"
+    },
+    {
+      "year": 2022,
+      "team": "Espanyol"
+    },
+    {
+      "year": 2022,
+      "team": "Elche"
+    },
+    {
+      "year": 2023,
+      "team": "Cadiz"
+    },
+    {
+      "year": 2023,
+      "team": "Almeria"
+    },
+    {
+      "year": 2023,
+      "team": "Granada CF"
+    },
+    {
+      "year": 2024,
+      "team": "Las Palmas"
+    },
+    {
+      "year": 2024,
+      "team": "Leganes"
+    },
+    {
+      "year": 2024,
+      "team": "Valladolid"
+    }
+  ]
+}

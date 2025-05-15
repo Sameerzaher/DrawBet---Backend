@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { getAllPromoRelegatedTeams } = require("../sheetsService");
+const { getAllPromoRelegatedTeams } = require("../sheetService");
 
 async function cachePromoRelegated() {
   console.log("📥 Fetching promoted + relegated teams from Google Sheets...");

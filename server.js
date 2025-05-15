@@ -1,116 +1,116 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
-const { getSheetData } = require("./getSheetData");
+
+const {
+  getAllDataCombined,
+  getTabAcrossSeasons,
+  getSpecificTab,
+  loadSeasonData,
+  memoryCache
+} = require("./sheetService");
 
 const app = express();
 app.use(cors());
 
-// קבצי גיליונות עם עונות
-const spreadsheets = [
-  { year: 2017, id: "196rGmls6sXYgO4OGejrbGMfGCkbSbXa6_qiY_i79ctY", league: "Spain" },
-  { year: 2018, id: "1h3KmAWIZ-40vzc-Aj9rjR7uaqpAAIRarXVmsiV7Vfkk", league: "Spain" },
-  { year: 2019, id: "1Aj8QjN9R7xbWc5QhQW2HWOlv-b0NPbrHjamY5eIsd1M", league: "Spain" },
-  { year: 2020, id: "1kB5kO0nreDJjvyuYv7c6X_6xUb53TJP2gAay_OBbcrg", league: "Spain" },
-  { year: 2021, id: "105m34i4f0PWKi1MoVY9nLVwJ5IZj2FBwRXSXx44MeOc", league: "Spain" },
-  { year: 2022, id: "1MY3-7S76Tl2OF_QPF8RGOFjfZOimhB1uCo3Ewi1dK3w", league: "Spain" },
-  { year: 2023, id: "1KwufAQhH0pqW9IouHpIGbOWv2rsObl0mJqUsLTuXqVw", league: "Spain" },
-  { year: 2024, id: "1_ieatBSiE9_EbjINoBGlNu9QHQT940WnWXlVYDWFXUY", league: "Spain" },
-];
-
-const gapVersions = ["Gap8", "Gap10"];
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function cleanTeamName(team, league) {
-  if (!team || !league) return team;
-  return team.startsWith(league + " ") ? team.replace(`${league} `, "") : team;
-}
-
-// ✅ API ראשי – טוען נתוני רצפים מגיליונות Google Sheets
-app.get("/api/activity", async (req, res) => {
-  const allData = [];
-  let globalHeader = null;
-  const successSheets = [];
-  const failedSheets = [];
-  let count = 0;
-
-  for (const { year, id, league } of spreadsheets) {
-    for (const gap of gapVersions) {
-      const sheetName = `CleanNoDraw_6plus_Detailed_${year}_${gap}`;
-      const range = `${sheetName}!A1:Z1000`;
-      count++;
-
-      try {
-        console.log(`📤 (${count}) Fetching: ${sheetName}`);
-        await sleep(3000); // חשוב: להפחית סיכוי ל־quota
-
-        const data = await getSheetData(id, range);
-        if (data.length > 1) {
-          if (!globalHeader) {
-            globalHeader = data[0];
-            console.log("🧾 Headers loaded.");
-          }
-
-          const teamIndex = globalHeader.findIndex(h =>
-            h?.toString().trim().toLowerCase() === "team"
-          );
-
-          const rows = data.slice(1);
-          const cleaned = rows.map(row => {
-            const newRow = [...row];
-            if (teamIndex !== -1 && row[teamIndex]) {
-              newRow[teamIndex] = cleanTeamName(row[teamIndex], league);
-            }
-            return [year.toString(), gap, league, ...newRow];
-          });
-
-          allData.push(...cleaned);
-          successSheets.push(sheetName);
-          console.log(`✅ Loaded: ${sheetName} (${cleaned.length} rows)`);
-        } else {
-          failedSheets.push(sheetName);
-          console.warn(`⚠️ No data in: ${sheetName}`);
-        }
-
-      } catch (err) {
-        failedSheets.push(sheetName);
-        console.error(`❌ Error loading ${sheetName}: ${err.message}`);
-      }
-    }
+/**
+ * טוען את כל הנתונים (cache לזיכרון ודיסק)
+ */
+app.get("/api/all-data", async (req, res) => {
+  try {
+    const data = await getAllDataCombined();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/all-data failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const finalData = globalHeader
-    ? [["Year", "Gap", "League", ...globalHeader], ...allData]
-    : [];
-
-  console.log(`\n📊 Summary:`);
-  console.log(`✅ Success (${successSheets.length}):`, successSheets);
-  console.log(`❌ Failed  (${failedSheets.length}):`, failedSheets);
-  console.log(`📦 Total rows: ${allData.length}`);
-
-  res.json(finalData);
 });
 
-// ✅ קריאה לנתוני קבוצות שעלו/ירדו – מקובץ cache מקומי
-app.get("/api/promorelegated", (req, res) => {
-  const filePath = path.join(__dirname, "cache/promorelegated.json");
+/**
+ * טוען את כל Gap10 מכל העונות
+ */
+app.get("/api/gap10", async (req, res) => {
+  try {
+    const data = await getTabAcrossSeasons("CleanNoDraw_6plus_Detailed_{{season}}_Gap10");
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/gap10 failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
-  if (fs.existsSync(filePath)) {
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const json = JSON.parse(raw);
-    console.log("📂 Loaded from cache/promorelegated.json");
-    res.json(json);
+/**
+ * טוען את כל Gap8 מכל העונות
+ */
+app.get("/api/gap8", async (req, res) => {
+  try {
+    const data = await getTabAcrossSeasons("CleanNoDraw_6plus_Detailed_{{season}}_Gap8");
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/gap8 failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * טוען את כל PromoReleg_{{season}} מכל העונות
+ */
+app.get("/api/promorelegated", async (req, res) => {
+  try {
+    const data = await getTabAcrossSeasons("PromoReleg_{{season}}");
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/promorelegated failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * טוען את כל Flexible_CleanStreaks_11_Unique מכל העונות
+ */
+app.get("/api/flexible", async (req, res) => {
+  try {
+    const data = await getTabAcrossSeasons("Flexible_CleanStreaks_11_Unique");
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/flexible failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * מחזיר את כל ה־cache הנוכחי מהזיכרון (מה שנטען ונשמר)
+ */
+app.get("/api/cache", (req, res) => {
+  res.json(memoryCache);
+});
+
+/**
+ * מחזיר את ה־cache של עונה ספציפית בלבד
+ */
+app.get("/api/cache/:season", (req, res) => {
+  const season = req.params.season;
+  if (memoryCache[season]) {
+    res.json(memoryCache[season]);
   } else {
-    console.warn("⚠️ promorelegated.json not found");
-    res.status(500).send("❌ No cached data found. Run cachePromorelegated.js");
+    res.status(404).json({ error: `No cache found for season ${season}` });
   }
 });
 
-const PORT = 4000;
+/**
+ * טוען מחדש עונה ספציפית מהמקור (API), גם אם יש cache
+ */
+app.get("/api/refresh/:season", async (req, res) => {
+  const season = req.params.season;
+  try {
+    const data = await loadSeasonData(season);
+    res.json(data || { error: `No data found for season ${season}` });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to refresh season", details: err.message });
+  }
+});
+
+// 📡 הפעלת השרת
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

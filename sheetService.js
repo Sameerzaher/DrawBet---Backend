@@ -2,9 +2,8 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-const cachePath = path.join(__dirname, "cache.json");
+const cachePath = path.join(__dirname, "cache", "sheetsDataCache.json");
 
-// 🔗 קישורי NocodeAPI לפי עונה
 const sheetApis = {
   2017: "https://v1.nocodeapi.com/sameerbelal/google_sheets/UYludJqTCVfNjwOD",
   2018: "https://v1.nocodeapi.com/sameerbelal/google_sheets/kmhWqJPpxLsTWGtA",
@@ -16,34 +15,37 @@ const sheetApis = {
   2024: "https://v1.nocodeapi.com/sameerbelal/google_sheets/PXhQsullybhwxuTD",
 };
 
-// 🔁 זיכרון פנימי
 const memoryCache = {};
-let cacheDirty = false;
 const failedSeasons = new Set();
+let cacheDirty = false;
 
-// 🧠 טען cache מהקובץ (אם קיים)
 function loadCacheFromFile() {
   if (fs.existsSync(cachePath)) {
-    const raw = fs.readFileSync(cachePath, "utf-8");
-    const parsed = JSON.parse(raw);
-    Object.assign(memoryCache, parsed);
-    console.log("📂 Cache loaded from file");
+    try {
+      const raw = fs.readFileSync(cachePath, "utf-8");
+      const parsed = JSON.parse(raw);
+      Object.assign(memoryCache, parsed);
+      console.log("📂 Cache loaded from file");
+    } catch (err) {
+      console.warn("⚠️ Failed to parse cache file, starting fresh.");
+    }
   }
 }
 
-// 💾 שמור cache לדיסק רק אם השתנה
 function saveCacheToFile() {
-  if (!cacheDirty) return;
-  fs.writeFileSync(cachePath, JSON.stringify(memoryCache, null, 2));
-  console.log("💾 Saved cache to file");
-  cacheDirty = false;
+  try {
+    if (!cacheDirty) return;
+    fs.writeFileSync(cachePath, JSON.stringify(memoryCache, null, 2), "utf-8");
+    console.log("💾 Saved cache to file");
+    cacheDirty = false;
+  } catch (err) {
+    console.error("❌ Failed to save cache file:", err.message);
+  }
 }
 
-// ✅ טוען טאב אחד לפי שם, עם cache ומניעת טעינה כפולה
 async function getSpecificTab(season, tabName) {
   if (!memoryCache[season]) memoryCache[season] = {};
 
-  // כבר קיים בזיכרון?
   if (Object.prototype.hasOwnProperty.call(memoryCache[season], tabName)) {
     return memoryCache[season][tabName];
   }
@@ -64,14 +66,12 @@ async function getSpecificTab(season, tabName) {
   } catch (err) {
     const code = err?.response?.status || err.message;
     console.log(`⚠️ '${tabName}' (${season}) failed: ${code}`);
-
-    memoryCache[season][tabName] = []; // גם כישלון נשמר
+    memoryCache[season][tabName] = [];
     cacheDirty = true;
     return [];
   }
 }
 
-// ✅ טוען Gap10 ואם נכשל — מנסה Gap8
 async function getNoDrawData(season) {
   const tab10 = `CleanNoDraw_6plus_Detailed_${season}_Gap10`;
   const tab8 = `CleanNoDraw_6plus_Detailed_${season}_Gap8`;
@@ -83,20 +83,23 @@ async function getNoDrawData(season) {
   return rows8;
 }
 
-// ✅ טוען את כל המידע לעונה (3 טאבים) ושומר בזיכרון
 async function loadSeasonData(season) {
   try {
-    const [noDraw, promoReleg, flexible] = await Promise.all([
-      getNoDrawData(season),
+    const [gap10, gap8, promoReleg, flexible] = await Promise.all([
+      getSpecificTab(season, `CleanNoDraw_6plus_Detailed_${season}_Gap10`),
+      getSpecificTab(season, `CleanNoDraw_6plus_Detailed_${season}_Gap8`),
       getSpecificTab(season, `PromoReleg_${season}`),
-      getSpecificTab(season, "Flexible_CleanStreaks_11_Unique")
+      getSpecificTab(season, `Flexible_CleanStreaks_11_Unique_${season}`),
     ]);
 
-    const seasonData = { season, noDraw, promoReleg, flexible };
+    const seasonData = { season, gap10, gap8, promoReleg, flexible };
+    if (!memoryCache[season]) memoryCache[season] = {};
     memoryCache[season]._combined = seasonData;
-    failedSeasons.delete(season);
+    cacheDirty = true;
     saveCacheToFile();
 
+    console.log(`✅ Successfully refreshed season ${season}`);
+    failedSeasons.delete(season);
     return seasonData;
   } catch (err) {
     console.error(`❌ Load failed for ${season}: ${err.message}`);
@@ -105,48 +108,38 @@ async function loadSeasonData(season) {
   }
 }
 
-// ✅ טוען את כל העונות עם שמירה ל־cache.json
 async function getAllDataCombined() {
   const seasons = Object.keys(sheetApis);
-
   for (const season of seasons) {
-    const has = memoryCache[season]?.['_combined'];
+    const has = memoryCache[season]?.["_combined"];
     if (!has || failedSeasons.has(season)) {
       await loadSeasonData(season);
     }
   }
-
-  saveCacheToFile(); // אחרי לולאה שלמה
+  saveCacheToFile();
   return Object.values(memoryCache)
-    .map(s => s._combined)
+    .map((s) => s._combined)
     .filter(Boolean);
 }
 
-// ✅ טוען טאב תבניתי לפי עונה
 async function getTabAcrossSeasons(tabTemplate) {
   const results = [];
-
   for (const season of Object.keys(sheetApis)) {
     const tabName = tabTemplate.replace("{{season}}", season);
     const rows = await getSpecificTab(season, tabName);
-
-    results.push({
-      season,
-      tab: tabName,
-      rows
-    });
+    results.push({ season, tab: tabName, rows });
   }
-
   saveCacheToFile();
   return results;
 }
 
-// ⏳ טעינה ראשונית מהקובץ בעת עלייה
 loadCacheFromFile();
 
 module.exports = {
   getAllDataCombined,
   loadSeasonData,
   getTabAcrossSeasons,
-  getSpecificTab
+  getSpecificTab,
+  memoryCache,
+  saveCacheToFile,
 };

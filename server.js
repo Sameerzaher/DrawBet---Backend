@@ -52,7 +52,7 @@ app.get("/api/gap8", async (req, res) => {
 // Flexible tab per season
 app.get("/api/flexible11", async (req, res) => {
   try {
-    const data = await getTabAcrossSeasons("Flexible_CleanStreaks_11_Unique");
+    const data = await getTabAcrossSeasons("Flexible_CleanStreaks_11_Unique_{{season}}");
     res.json(data);
   } catch (err) {
     console.error("❌ /api/flexible11 failed:", err.message);
@@ -128,7 +128,7 @@ app.get("/api/all-tabs/:season", async (req, res) => {
     const [gap10, gap8, flexible, promo] = await Promise.all([
       getSpecificTab(season, `CleanNoDraw_6plus_Detailed_${season}_Gap10`),
       getSpecificTab(season, `CleanNoDraw_6plus_Detailed_${season}_Gap8`),
-      getSpecificTab(season, `Flexible_CleanStreaks_11_Unique`),
+      getSpecificTab(season, `Flexible_CleanStreaks_11_Unique_${season}`),
       getSpecificTab(season, `PromoReleg_${season}`),
     ]);
 

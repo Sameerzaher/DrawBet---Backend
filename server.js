@@ -44,13 +44,15 @@ app.get("/api/gap8", async (req, res) => {
 
 app.get("/api/flexible11", async (req, res) => {
   try {
-    const data = await getTabAcrossSeasons("Flexible_CleanStreaks_11_Unique_{{season}}");
+    // תבנית קבועה ללא עונות
+    const data = await getTabAcrossSeasons("Flexible_CleanStreaks_11_Unique");
     res.json(data);
   } catch (err) {
     console.error("❌ /api/flexible11 failed:", err.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 app.get("/api/promorelegated", async (req, res) => {
   try {

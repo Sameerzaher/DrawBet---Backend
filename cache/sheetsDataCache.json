@@ -13664,7 +13664,8 @@
         "OppRank 8": "1",
         "Reason 8": "Big"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2017": []
   },
   "2018": {
     "PromoReleg_2018": [
@@ -28484,7 +28485,8 @@
         "Result 8": "3:1",
         "OppRank 8": "16"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2018": []
   },
   "2019": {
     "PromoReleg_2019": [
@@ -41550,7 +41552,8 @@
         "OppRank 7": "9",
         "Reason 7": "Promoted"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2019": []
   },
   "2020": {
     "PromoReleg_2020": [
@@ -55571,7 +55574,8 @@
         "OppRank 6": "9",
         "Reason 6": "Gap"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2020": []
   },
   "2021": {
     "PromoReleg_2021": [
@@ -68440,7 +68444,8 @@
         "Result 18": "2:6",
         "OppRank 18": "17"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2021": []
   },
   "2022": {
     "CleanNoDraw_6plus_Detailed_2022_Gap10": [
@@ -83524,7 +83529,8 @@
         "Result 6": "3:0",
         "OppRank 6": "12"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2022": []
   },
   "2023": {
     "PromoReleg_2023": [
@@ -97424,7 +97430,8 @@
         "Result 8": "0:2",
         "OppRank 8": "7"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2023": []
   },
   "2024": {
     "PromoReleg_2024": [],
@@ -102471,6 +102478,7 @@
         "Score 11": "null:null",
         "Draw Count": "5"
       }
-    ]
+    ],
+    "Flexible_CleanStreaks_11_Unique_2024": []
   }
 }

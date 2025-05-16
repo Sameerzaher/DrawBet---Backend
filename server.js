@@ -146,3 +146,21 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+// ✅ רענון אוטומטי בעת עליית השרת ב-Render
+(async () => {
+  try {
+    console.log("🔄 Auto-refreshing all data on startup...");
+    const seasons = Object.keys(memoryCache).length > 0
+      ? Object.keys(memoryCache)
+      : Object.keys(sheetApis); // fallback במקרה שה־cache ריק
+
+    for (const season of seasons) {
+      await loadSeasonData(season);
+    }
+
+    saveCacheToFile();
+    console.log("✅ Auto-refresh complete.");
+  } catch (err) {
+    console.error("❌ Auto-refresh failed:", err.message);
+  }
+})();

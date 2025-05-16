@@ -122,6 +122,16 @@ app.post("/api/refresh-all", async (req, res) => {
     res.status(500).json({ error: "Failed to refresh all" });
   }
 });
+// ב־server.js או index.js
+app.get("/api/teamranks", async (req, res) => {
+  try {
+    const data = await getTabAcrossSeasons("TeamRanks_{{season}}");
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/teamranks failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // ✅ Unified tab loader per season
 app.get("/api/all-tabs/:season", async (req, res) => {

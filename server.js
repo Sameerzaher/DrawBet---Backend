@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-
 const {
   getAllDataCombined,
   getTabAcrossSeasons,
@@ -13,21 +12,16 @@ const {
 } = require("./sheetService");
 
 const app = express();
-app.use(cors());
+
+// ✅ הפעלת CORS — גישה מ־frontend (onrender)
+app.use(cors({
+  origin: "*", // אפשר להחליף ל־"https://drawbet-frontend.onrender.com"
+  methods: ["GET", "POST"],
+}));
+
 app.use(express.json());
 
-// Load all data across all seasons
-app.get("/api/all-data", async (req, res) => {
-  try {
-    const data = await getAllDataCombined();
-    res.json(data);
-  } catch (err) {
-    console.error("❌ /api/all-data failed:", err.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Gap10 tab per season
+// ✅ כל הטאבים לפי עונות:
 app.get("/api/gap10", async (req, res) => {
   try {
     const data = await getTabAcrossSeasons("CleanNoDraw_6plus_Detailed_{{season}}_Gap10");
@@ -38,7 +32,6 @@ app.get("/api/gap10", async (req, res) => {
   }
 });
 
-// Gap8 tab per season
 app.get("/api/gap8", async (req, res) => {
   try {
     const data = await getTabAcrossSeasons("CleanNoDraw_6plus_Detailed_{{season}}_Gap8");
@@ -49,7 +42,6 @@ app.get("/api/gap8", async (req, res) => {
   }
 });
 
-// Flexible tab per season
 app.get("/api/flexible11", async (req, res) => {
   try {
     const data = await getTabAcrossSeasons("Flexible_CleanStreaks_11_Unique_{{season}}");
@@ -60,7 +52,6 @@ app.get("/api/flexible11", async (req, res) => {
   }
 });
 
-// Promoted/relegated teams per season
 app.get("/api/promorelegated", async (req, res) => {
   try {
     const data = await getTabAcrossSeasons("PromoReleg_{{season}}");
@@ -71,12 +62,23 @@ app.get("/api/promorelegated", async (req, res) => {
   }
 });
 
-// Get cache for all
+// ✅ שליפה של כל העונות המאוחדות
+app.get("/api/all-data", async (req, res) => {
+  try {
+    const data = await getAllDataCombined();
+    res.json(data);
+  } catch (err) {
+    console.error("❌ /api/all-data failed:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ✅ Cache נוכחי (כללי)
 app.get("/api/cache", (req, res) => {
   res.json(memoryCache);
 });
 
-// Get cache for specific season
+// ✅ Cache לפי עונה
 app.get("/api/cache/:season", (req, res) => {
   const season = req.params.season;
   if (memoryCache[season]) {
@@ -86,42 +88,40 @@ app.get("/api/cache/:season", (req, res) => {
   }
 });
 
-// Refresh specific season
+// ✅ רענון עונה מסוימת
 app.post("/api/refresh/:season", async (req, res) => {
   const season = req.params.season;
-  console.log(`🔄 Request to refresh season ${season}`);
   try {
     delete memoryCache[season];
     const data = await loadSeasonData(season);
     if (data) {
-      console.log(`✅ Successfully refreshed season ${season}`);
       saveCacheToFile();
-      res.json({ success: true, season, message: `Refreshed ${season}`, data });
+      res.json({ success: true, season, data });
     } else {
       res.status(404).json({ success: false, message: `No data for ${season}` });
     }
   } catch (err) {
-    console.error(`❌ Failed to refresh season ${season}:`, err);
-    res.status(500).json({ error: "Failed to refresh season", details: err.message });
+    console.error(`❌ Refresh failed for ${season}:`, err.message);
+    res.status(500).json({ error: "Failed to refresh season" });
   }
 });
 
-// Refresh ALL seasons
+// ✅ רענון כללי לכל העונות
 app.post("/api/refresh-all", async (req, res) => {
-  const seasons = Object.keys(memoryCache);
   try {
+    const seasons = Object.keys(memoryCache);
     for (const season of seasons) {
       await loadSeasonData(season);
     }
     saveCacheToFile();
     res.json({ success: true, message: "All seasons refreshed." });
   } catch (err) {
-    console.error("❌ Failed to refresh all:", err);
-    res.status(500).json({ error: "Failed to refresh all", details: err.message });
+    console.error("❌ Refresh-all failed:", err.message);
+    res.status(500).json({ error: "Failed to refresh all" });
   }
 });
 
-// Unified tab loader per season
+// ✅ Unified tab loader per season
 app.get("/api/all-tabs/:season", async (req, res) => {
   const season = req.params.season;
   try {
@@ -134,12 +134,13 @@ app.get("/api/all-tabs/:season", async (req, res) => {
 
     res.json({ season, gap10, gap8, flexible, promoRelegated: promo });
   } catch (err) {
-    console.error(`❌ /api/all-tabs/${season} failed:`, err);
-    res.status(500).json({ error: "Failed to load all tabs for season" });
+    console.error(`❌ Failed all-tabs for ${season}:`, err.message);
+    res.status(500).json({ error: "Failed to load tabs" });
   }
 });
 
+// ✅ התחלת השרת
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
